@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The End of Trust? Investigating a High-Profile Voice Deepfake Incident</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+        }
+        
+        .slide {
+            width: 100vw;
+            min-height: 100vh;
+            height: auto;
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            color: #1e293b;
+            overflow-y: auto;
+        }
+        
+        /* Mobile-specific slide height adjustments */
+        @media (max-width: 768px) {
+            .slide {
+                min-height: 100vh;
+                height: auto;
+                padding-bottom: 2rem;
+            }
+            
+            /* Specific fixes for problematic slides */
+            .slide:nth-child(2), /* Presenters */
+            .slide:nth-child(3), /* Voice Demo */
+            .slide:nth-child(4), /* Objectives */
+            .slide:nth-child(5), /* Importance */
+            .slide:nth-child(11), /* Implications */
+            .slide:nth-child(12), /* Recommendations */
+            .slide:nth-child(13) { /* Conclusion */
+                min-height: 120vh;
+                height: auto;
+            }
+            
+            /* Ensure content doesn't get cut off */
+            .slide-content {
+                padding-bottom: 4rem;
+            }
+            
+            /* Better scroll handling for tall content */
+            .scroll-container {
+                max-height: 80vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .slide {
+                min-height: 130vh;
+            }
+            
+            .scroll-container {
+                max-height: 85vh;
+            }
+        }
+        
+        .slide.active {
+            display: flex;
+            animation: slideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .slide-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+            width: 100%;
+        }
+        
+        /* Mobile-specific optimizations */
+        @media (max-width: 768px) {
+            .slide-content {
+                padding: 1.5rem 1rem;
+            }
+            
+            .nav-button {
+                padding: 0.75rem;
+                width: 48px;
+                height: 48px;
+            }
+            
+            .nav-button.prev {
+                left: 1rem;
+            }
+            
+            .nav-button.next {
+                right: 1rem;
+            }
+            
+            .slide-counter {
+                bottom: 1rem;
+                right: 1rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            .play-button {
+                bottom: 1rem;
+                left: 1rem;
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem !important;
+                line-height: 1.1;
+            }
+            
+            h2 {
+                font-size: 1.8rem !important;
+            }
+            
+            .highlight-box,
+            .highlight-box-secondary {
+                padding: 1.5rem;
+                margin: 1rem 0;
+            }
+            
+            .tool-card {
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+            }
+            
+            .icon-box {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .timeline-item {
+                padding-left: 2rem;
+            }
+            
+            .timeline-dot {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .timeline-line {
+                left: 9px;
+            }
+            
+            audio {
+                width: 100%;
+                height: 40px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .slide-content {
+                padding: 1rem 0.5rem;
+            }
+            
+            h1 {
+                font-size: 2rem !important;
+            }
+            
+            h2 {
+                font-size: 1.5rem !important;
+            }
+            
+            .grid.grid-cols-2.lg\\:grid-cols-4 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .grid.grid-cols-1.md\\:grid-cols-2.lg\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .grid.grid-cols-1.md\\:grid-cols-2 {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .grid.grid-cols-1.md\\:grid-cols-3 {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        
+        /* Improve touch targets */
+        .nav-button,
+        .play-button,
+        .tag {
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        /* Better audio controls for mobile */
+        audio {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            outline: none;
+            width: 100%;
+            height: 40px;
+        }
+        
+        audio::-webkit-media-controls-panel {
+            background-color: #f1f5f9;
+        }
+        
+        /* Mobile-specific audio enhancements */
+        @media (max-width: 768px) {
+            audio {
+                height: 44px;
+                font-size: 14px;
+            }
+            
+            .bg-gray-50.rounded-lg {
+                padding: 1rem;
+            }
+            
+            .bg-gray-50.rounded-lg h4 {
+                font-size: 0.8rem;
+                margin-bottom: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            audio {
+                height: 48px;
+                min-width: 100%;
+            }
+        }
+        
+        /* Custom audio player styling for better mobile UX */
+        audio::-webkit-media-controls-play-button,
+        audio::-webkit-media-controls-pause-button {
+            background-color: #3b82f6;
+            border-radius: 50%;
+        }
+        
+        audio::-webkit-media-controls-timeline {
+            background-color: #e2e8f0;
+            border-radius: 2px;
+        }
+        
+        audio::-webkit-media-controls-current-time,
+        audio::-webkit-media-controls-time-remaining {
+            font-size: 12px;
+            color: #475569;
+        }
+        
+        /* Volume control for mobile */
+        audio::-webkit-media-controls-volume-slider {
+            background-color: #3b82f6;
+            height: 4px;
+            border-radius: 2px;
+        }
+        
+        /* Prevent audio from triggering page scroll on mobile */
+        audio:focus {
+            outline: 2px solid #3b82f6;
+            outline-offset: 2px;
+        }
+        
+        /* Better touch handling for audio elements */
+        @media (hover: none) and (pointer: coarse) {
+            audio::-webkit-media-controls-play-button {
+                min-width: 44px;
+                min-height: 44px;
+            }
+        }
+        
+        /* Touch-friendly scrolling */
+        .scroll-container {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .nav-button {
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 1rem;
+            cursor: pointer;
+            border-radius: 50%;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .nav-button:hover {
+            background: #ffffff;
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        .nav-button.prev {
+            left: 2rem;
+        }
+        
+        .nav-button.next {
+            right: 2rem;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .play-button {
+            position: fixed;
+            bottom: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            color: #475569;
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 25px;
+            z-index: 1000;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-weight: 600;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .play-button:hover {
+            background: #ffffff;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            color: #1e293b;
+        }
+        
+        .tool-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 2rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tool-card:hover {
+            transform: translateY(-8px);
+            background: #ffffff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+        
+        .incident-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .incident-card:hover {
+            transform: translateY(-4px);
+            background: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 16px;
+            object-fit: cover;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        .timeline-dot {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 50%;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+        
+        .timeline-line {
+            width: 2px;
+            background: linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 100%);
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: -24px;
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 3rem;
+            margin-bottom: 2rem;
+        }
+        
+        .highlight-box {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            color: white;
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.25);
+        }
+        
+        .highlight-box-secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 24px;
+            padding: 2.5rem;
+            margin: 2rem 0;
+            color: white;
+            box-shadow: 0 20px 25px -5px rgba(16, 185, 129, 0.25);
+        }
+        
+        .scroll-container {
+            max-height: 75vh;
+            overflow-y: auto;
+            padding-right: 1rem;
+        }
+        
+        .scroll-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .gradient-text-secondary {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tag {
+            display: inline-block;
+            padding: 0.375rem 0.875rem;
+            border-radius: 20px;
+            font-size: 0.825rem;
+            font-weight: 600;
+            margin: 0.25rem;
+            transition: all 0.2s ease;
+        }
+        
+        .tag:hover {
+            transform: translateY(-2px);
+        }
+        
+        .tag-red {
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .tag-blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: #2563eb;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+        
+        .tag-green {
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .tag-purple {
+            background: rgba(139, 92, 246, 0.1);
+            color: #7c3aed;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .tag-orange {
+            background: rgba(251, 146, 60, 0.1);
+            color: #ea580c;
+            border: 1px solid rgba(251, 146, 60, 0.2);
+        }
+        
+        .tag-yellow {
+            background: rgba(250, 204, 21, 0.1);
+            color: #ca8a04;
+            border: 1px solid rgba(250, 204, 21, 0.2);
+        }
+        
+        .tag-pink {
+            background: rgba(236, 72, 153, 0.1);
+            color: #db2777;
+            border: 1px solid rgba(236, 72, 153, 0.2);
+        }
+        
+        .tag-cyan {
+            background: rgba(6, 182, 212, 0.1);
+            color: #0891b2;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+        
+        .tag-gray {
+            background: rgba(107, 114, 128, 0.1);
+            color: #374151;
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+        
+        .icon-box {
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            font-size: 2rem;
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .icon-gradient-1 {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+        }
+        
+        .icon-gradient-2 {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        
+        .icon-gradient-3 {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+        
+        .icon-gradient-4 {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .icon-gradient-5 {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        }
+        
+        .icon-gradient-6 {
+            background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);
+        }
+        
+        .icon-gradient-7 {
+            background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+        }
+        
+        .icon-gradient-8 {
+            background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+            background: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .presenter-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        
+        .presenter-card:hover {
+            transform: translateY(-8px);
+            background: #ffffff;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+        
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <button class="nav-button prev" onclick="previousSlide()">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="nav-button next" onclick="nextSlide()">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    
+    <!-- Slide Counter -->
+    <div class="slide-counter">
+        <span id="current-slide">1</span> / <span id="total-slides">13</span>
+    </div>
+    
+    <!-- Play Button -->
+    <button class="play-button" onclick="toggleAutoPlay()">
+        <i class="fas fa-play" id="play-icon"></i> <span id="play-text">Auto Play</span>
+    </button>
+
+    <!-- Slide 1: Title -->
+    <div class="slide active">
+        <div class="slide-content flex flex-col justify-center items-center text-center">
+            <div class="mb-8">
+                <div class="icon-box icon-gradient-1">
+                    <i class="fas fa-microphone-alt"></i>
+                </div>
+            </div>
+            <h1 class="text-5xl md:text-7xl font-bold mb-6 section-title">
+                <span class="gradient-text">The End of Trust?</span>
+            </h1>
+            <h2 class="text-3xl md:text-4xl font-semibold mb-8 text-gray-600">Investigating a High-Profile Voice Deepfake Incident</h2>
+            <div class="highlight-box max-w-4xl">
+                <p class="text-xl mb-4 font-medium">A comprehensive analysis of voice deepfake incidents in Malaysia and their implications for digital trust</p>
+                <div class="flex justify-center space-x-4 mt-6">
+                    <div class="text-center">
+                        <i class="fas fa-chart-line text-3xl mb-2"></i>
+                        <p class="text-sm">Data Analysis</p>
+                    </div>
+                    <div class="text-center">
+                        <i class="fas fa-shield-alt text-3xl mb-2"></i>
+                        <p class="text-sm">Security Impact</p>
+                    </div>
+                    <div class="text-center">
+                        <i class="fas fa-globe text-3xl mb-2"></i>
+                        <p class="text-sm">Global Context</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-12 text-lg text-gray-600">
+                <p class="mb-2 font-semibold"><i class="fas fa-university mr-2"></i>UiTM Tapah</p>
+                <p class="mb-2"><i class="fas fa-book mr-2"></i>Course: ICT652</p>
+                <p class="mb-2"><i class="fas fa-users mr-2"></i>Group: A4CDCS2306A</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 2: Presenters -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center items-center text-center">
+            <h2 class="text-4xl font-bold mb-12 section-title">
+                <span class="gradient-text">Presenters</span>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg: gap-6 max-w-6xl">
+                <div class="presenter-card">
+                    <div class="icon-box icon-gradient-2">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">AMIR HAFIZI BIN MUSA</h3>
+                    <p class="text-lg text-gray-600 font-medium">2024745815</p>
+                    <div class="mt-4 flex justify-center space-x-2">
+                        <span class="tag tag-blue">Lead Researcher</span>
+                        <span class="tag tag-green">Data Analysis</span>
+                    </div>
+                </div>
+                <div class="presenter-card">
+                    <div class="icon-box icon-gradient-3">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">MUHAMMAD 'ADLI BIN MOHD ALI</h3>
+                    <p class="text-lg text-gray-600 font-medium">2024974573</p>
+                    <div class="mt-4 flex justify-center space-x-2">
+                        <span class="tag tag-purple">Technical Expert</span>
+                        <span class="tag tag-orange">Security</span>
+                    </div>
+                </div>
+                <div class="presenter-card">
+                    <div class="icon-box icon-gradient-4">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">NIK MUHAMMAD HAZIQ BIN NIK HASNI</h3>
+                    <p class="text-lg text-gray-600 font-medium">2024741073</p>
+                    <div class="mt-4 flex justify-center space-x-2">
+                        <span class="tag tag-cyan">Policy Analysis</span>
+                        <span class="tag tag-pink">Research</span>
+                    </div>
+                </div>
+                <div class="presenter-card">
+                    <div class="icon-box icon-gradient-5">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">MOHAMAD BUKHARI BIN AHMAD HUZAIRI</h3>
+                    <p class="text-lg text-gray-600 font-medium">2024916761</p>
+                    <div class="mt-4 flex justify-center space-x-2">
+                        <span class="tag tag-yellow">Documentation</span>
+                        <span class="tag tag-blue">Analysis</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Slide 3: Voice Deepfake and Cloning Demo -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center">
+            <h2 class="text-2xl md:text-3xl font-bold mb-6 text-center section-title">
+                <span class="gradient-text">Voice Deepfake & Cloning Demo</span>
+            </h2>
+            <div class="max-w-7xl mx-auto">
+                <div class="highlight-box mb-6">
+                    <p class="text-lg font-medium text-center">Live demonstration of voice cloning technology using our team's voice samples</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Bukhari Demo -->
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-1" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3">Mohamad Bukhari</h3>
+                        <p class="text-gray-600 mb-4">Original vs Cloned Voice</p>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-green-600 text-sm">
+                                    <i class="fas fa-microphone mr-1"></i>Original Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="Bukhari.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-red-600 text-sm">
+                                    <i class="fas fa-clone mr-1"></i>Cloned Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="Bukhari_clone.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <!-- Adli Demo -->
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3">Muhammad 'Adli</h3>
+                        <p class="text-gray-600 mb-4">Original vs Cloned Voice</p>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-green-600 text-sm">
+                                    <i class="fas fa-microphone mr-1"></i>Original Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="Adli.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-red-600 text-sm">
+                                    <i class="fas fa-clone mr-1"></i>Cloned Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="Adli_clone.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <!-- Nik Demo -->
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3">Nik Muhammad Haziq</h3>
+                        <p class="text-gray-600 mb-4">Original vs Cloned Voice</p>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-green-600 text-sm">
+                                    <i class="fas fa-microphone mr-1"></i>Original Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="nik.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-red-600 text-sm">
+                                    <i class="fas fa-clone mr-1"></i>Cloned Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="Nik_clone.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                        
+                    </div>
+
+                    <!-- English Voice Demo -->
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-3">English Voice</h3>
+                        <p class="text-gray-600 mb-4">Original vs Cloned Voice</p>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-green-600 text-sm">
+                                    <i class="fas fa-microphone mr-1"></i>Original Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="EnglishVoice.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <h4 class="font-semibold mb-1 text-red-600 text-sm">
+                                    <i class="fas fa-clone mr-1"></i>Cloned Voice
+                                </h4>
+                                <audio controls class="w-full">
+                                    <source src="English_clone.mp3" type="audio/mpeg">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <div class="highlight-box-secondary mt-6">
+                    <div class="text-center">
+                        <h3 class="text-xl font-bold mb-3">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            The Challenge of Detection
+                        </h3>
+                        <p class="text-base mb-4">Can you distinguish between the original and cloned voices? This demonstrates the sophistication of modern voice cloning technology.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                            <div class="text-center">
+                                <i class="fas fa-brain text-2xl mb-2"></i>
+                                <p class="font-semibold text-sm">Human Perception</p>
+                                <p class="text-xs">Increasingly difficult to detect</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-shield-alt text-2xl mb-2"></i>
+                                <p class="font-semibold text-sm">Current Detection</p>
+                                <p class="text-xs">Limited effectiveness</p>
+                            </div>
+                            <div class="text-center">
+                                <i class="fas fa-robot text-2xl mb-2"></i>
+                                <p class="font-semibold text-sm">AI Arms Race</p>
+                                <p class="text-xs">Technology vs Detection</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Slide 4: Objectives -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Research Objectives</span>
+            </h2>
+            <div class="max-w-5xl mx-auto">
+                <div class="highlight-box mb-8">
+                    <div class="flex items-start mb-4">
+                        <div class="icon-box icon-gradient-1" style="width: 60px; height: 60px; font-size: 1.5rem; margin: 0 1.5rem 0 0;">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Primary Objective</h3>
+                            <p class="text-lg font-medium">Investigate and analyze high-profile voice deepfake incidents in Malaysia to understand their impact on digital trust and security</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-search"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Identify</h3>
+                        <p class="text-gray-600">Document and categorize all voice deepfake incidents in Malaysia</p>
+                    </div>
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Analyze</h3>
+                        <p class="text-gray-600">Examine patterns, methods, and targets of voice deepfake attacks</p>
+                    </div>
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Assess</h3>
+                        <p class="text-gray-600">Evaluate the effectiveness of current detection and prevention measures</p>
+                    </div>
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-5" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Recommend</h3>
+                        <p class="text-gray-600">Propose strategies to combat voice deepfake threats</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 5: Importance -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Why This Matters</span>
+            </h2>
+            <div class="max-w-6xl mx-auto">
+                <div class="highlight-box mb-8">
+                    <p class="text-xl text-center font-medium">Voice deepfakes represent one of the most significant threats to digital trust in the modern era</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-4">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Security Threat</h3>
+                        <p class="text-gray-600 mb-4">Voice authentication bypass, financial fraud, identity theft</p>
+                        <div class="flex justify-center space-x-2">
+                            <span class="tag tag-red">Critical</span>
+                            <span class="tag tag-orange">Urgent</span>
+                        </div>
+                    </div>
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-3">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Legal Implications</h3>
+                        <p class="text-gray-600 mb-4">Evidence manipulation, defamation, jurisdictional challenges</p>
+                        <div class="flex justify-center space-x-2">
+                            <span class="tag tag-purple">Complex</span>
+                            <span class="tag tag-blue">Evolving</span>
+                        </div>
+                    </div>
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-2">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-3">Social Impact</h3>
+                        <p class="text-gray-600 mb-4">Erosion of trust, misinformation, public safety concerns</p>
+                        <div class="flex justify-center space-x-2">
+                            <span class="tag tag-green">Widespread</span>
+                            <span class="tag tag-cyan">Growing</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="highlight-box-secondary mt-8">
+                    <p class="text-2xl font-bold text-center mb-2">Malaysia's Unique Position</p>
+                    <p class="text-lg text-center">Rapid digital adoption + Multilingual society = Complex challenge landscape</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Malaysia Deepfake Incidents Overview -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Voice Deepfake Incidents in Malaysia</span>
+            </h2>
+            <div class="scroll-container max-w-6xl mx-auto">
+                <div class="incident-card">
+                    <div class="flex items-start">
+                        <div class="timeline-dot">
+                            <div class="timeline-line"></div>
+                        </div>
+                        <div class="ml-6 flex-1">
+                            <h3 class="text-2xl font-bold mb-2 text-gray-800">Political Manipulation (2023)</h3>
+                            <p class="text-lg mb-4 text-gray-600">Deepfake audio of political figures making controversial statements circulated during election period</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag tag-red">Political</span>
+                                <span class="tag tag-blue">Election Interference</span>
+                                <span class="tag tag-purple">Social Media</span>
+                                <span class="tag tag-orange">High Impact</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="incident-card">
+                    <div class="flex items-start">
+                        <div class="timeline-dot">
+                            <div class="timeline-line"></div>
+                        </div>
+                        <div class="ml-6 flex-1">
+                            <h3 class="text-2xl font-bold mb-2 text-gray-800">Banking Fraud (2023)</h3>
+                            <p class="text-lg mb-4 text-gray-600">Criminals used voice deepfakes to bypass bank voice authentication systems, resulting in significant financial losses</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag tag-green">Financial</span>
+                                <span class="tag tag-orange">Authentication Bypass</span>
+                                <span class="tag tag-red">RM 2.5M+ Loss</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="incident-card">
+                    <div class="flex items-start">
+                        <div class="timeline-dot">
+                            <div class="timeline-line"></div>
+                        </div>
+                        <div class="ml-6 flex-1">
+                            <h3 class="text-2xl font-bold mb-2 text-gray-800">Corporate Espionage (2024)</h3>
+                            <p class="text-lg mb-4 text-gray-600">Voice deepfake used to impersonate executives for obtaining sensitive business information</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag tag-blue">Corporate</span>
+                                <span class="tag tag-purple">Data Theft</span>
+                                <span class="tag tag-yellow">Sophisticated</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="incident-card">
+                    <div class="flex items-start">
+                        <div class="timeline-dot">
+                            <div class="timeline-line"></div>
+                        </div>
+                        <div class="ml-6 flex-1">
+                            <h3 class="text-2xl font-bold mb-2 text-gray-800">Celebrity Scam (2024)</h3>
+                            <p class="text-lg mb-4 text-gray-600">Fake endorsements and investment schemes using celebrity voice clones</p>
+                            <div class="flex flex-wrap gap-2">
+                                <span class="tag tag-pink">Celebrity</span>
+                                <span class="tag tag-green">Investment Fraud</span>
+                                <span class="tag tag-cyan">Social Media</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 7: Detailed Incident Analysis -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Incident Analysis & Impact</span>
+            </h2>
+            <div class="scroll-container max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-1" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Impact Assessment</h3>
+                        <div class="space-y-4">
+                            <div class="stat-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Financial Losses</span>
+                                    <span class="tag tag-red">RM 2.5M+</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Trust Erosion</span>
+                                    <span class="tag tag-orange">High</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Media Coverage</span>
+                                    <span class="tag tag-blue">Widespread</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-semibold">Policy Response</span>
+                                    <span class="tag tag-green">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-4" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-shield-virus"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Vulnerability Factors</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Widespread voice authentication adoption</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Multi-lingual environment complexity</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Limited public awareness</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check-circle text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Rapid digital transformation</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-3" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Legal & Regulatory Response</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-file-alt text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">MCMC guidelines on deepfake content</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-file-alt text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Central Bank authentication standards review</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-file-alt text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Personal Data Protection Act amendments</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-file-alt text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Cybersecurity Act 2024 provisions</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-2" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Public Awareness</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-bullhorn text-purple-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Government awareness campaigns</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-bullhorn text-purple-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Bank customer education programs</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-bullhorn text-purple-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Media literacy initiatives</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-bullhorn text-purple-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Industry collaboration efforts</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 8: AI Voice Tools Overview -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">AI Voice Generation Landscape</span>
+            </h2>
+            <div class="max-w-6xl mx-auto text-center">
+                <div class="highlight-box mb-8">
+                    <p class="text-xl font-medium">Understanding the tools behind voice deepfake technology</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-1">
+                            <i class="fas fa-lock"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Closed-Source Solutions</h3>
+                        <p class="text-lg text-gray-600 mb-6">Commercial platforms with proprietary technology</p>
+                        <div class="space-y-3 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                                <span class="text-gray-700">Advanced quality & features</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                                <span class="text-gray-700">Commercial support & SLAs</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                                <span class="text-gray-700">Easier integration</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                                <span class="text-gray-700">Subscription-based pricing</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-2">
+                            <i class="fas fa-lock-open"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Open-Source Solutions</h3>
+                        <p class="text-lg text-gray-600 mb-6">Community-driven, freely available tools</p>
+                        <div class="space-y-3 text-left">
+                            <div class="flex items-center">
+                                <i class="fas fa-code text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Customizable & extensible</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-code text-green-500 mr-3"></i>
+                                <span class="text-gray-700">No licensing costs</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-code text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Community support</span>
+                            </div>
+                            <div class="flex items-center">
+                                <i class="fas fa-code text-green-500 mr-3"></i>
+                                <span class="text-gray-700">Privacy & control</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 9: Closed-Source Tools -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Closed-Source AI Voice Tools</span>
+            </h2>
+            <div class="scroll-container max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-1">
+                            <span class="font-bold text-2xl">11L</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">ElevenLabs</h3>
+                        <p class="text-sm text-gray-600 mb-4">Premium voice synthesis with emotional intelligence</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-blue">High Quality</span>
+                            <span class="tag tag-green">Multilingual</span>
+                            <span class="tag tag-purple">API</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-2">
+                            <span class="font-bold text-2xl">MU</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Murf AI</h3>
+                        <p class="text-sm text-gray-600 mb-4">Professional voiceover platform with 120+ voices</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-purple">Business</span>
+                            <span class="tag tag-orange">API Access</span>
+                            <span class="tag tag-cyan">Professional</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-3">
+                            <span class="font-bold text-2xl">PL</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Play.ht</h3>
+                        <p class="text-sm text-gray-600 mb-4">Real-time voice cloning and synthesis</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-red">Real-time</span>
+                            <span class="tag tag-blue">Cloning</span>
+                            <span class="tag tag-green">Fast</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-5">
+                            <span class="font-bold text-2xl">RE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Replica Studios</h3>
+                        <p class="text-sm text-gray-600 mb-4">AI voice actors for games and media</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-pink">Entertainment</span>
+                            <span class="tag tag-purple">Emotional</span>
+                            <span class="tag tag-orange">Gaming</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-7">
+                            <span class="font-bold text-2xl">DE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Descript</h3>
+                        <p class="text-sm text-gray-600 mb-4">Podcast and video editing with voice synthesis</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-cyan">Editing</span>
+                            <span class="tag tag-green">Studio</span>
+                            <span class="tag tag-blue">Media</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-3">
+                            <span class="font-bold text-2xl">WE</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">WellSaid Labs</h3>
+                        <p class="text-sm text-gray-600 mb-4">Enterprise-grade voice synthesis platform</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-yellow">Enterprise</span>
+                            <span class="tag tag-orange">Professional</span>
+                            <span class="tag tag-purple">B2B</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Open-Source Tools -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Open-Source AI Voice Tools</span>
+            </h2>
+            <div class="scroll-container max-w-7xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-8">
+                            <span class="font-bold text-2xl">CO</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Coqui TTS</h3>
+                        <p class="text-sm text-gray-600 mb-4">Deep learning text-to-speech toolkit</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-gray">Python</span>
+                            <span class="tag tag-blue">GitHub</span>
+                            <span class="tag tag-green">ML</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-2">
+                            <span class="font-bold text-2xl">MO</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Mozilla TTS</h3>
+                        <p class="text-sm text-gray-600 mb-4">Open-source voice synthesis research</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-green">Research</span>
+                            <span class="tag tag-purple">TensorFlow</span>
+                            <span class="tag tag-orange">Open Source</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-1">
+                            <span class="font-bold text-2xl">FA</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">FastSpeech2</h3>
+                        <p class="text-sm text-gray-600 mb-4">Fast and high-quality TTS model</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-blue">PyTorch</span>
+                            <span class="tag tag-orange">Fast</span>
+                            <span class="tag tag-purple">Research</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-5">
+                            <span class="font-bold text-2xl">TA</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Tacotron2</h3>
+                        <p class="text-sm text-gray-600 mb-4">Neural TTS with attention mechanism</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-purple">Attention</span>
+                            <span class="tag tag-pink">NVIDIA</span>
+                            <span class="tag tag-blue">Neural</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-4">
+                            <span class="font-bold text-2xl">WA</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">WaveGlow</h3>
+                        <p class="text-sm text-gray-600 mb-4">Flow-based generative audio codec</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-red">Flow-based</span>
+                            <span class="tag tag-yellow">Audio</span>
+                            <span class="tag tag-orange">Codec</span>
+                        </div>
+                    </div>
+
+                    <div class="tool-card text-center">
+                        <div class="icon-box icon-gradient-7">
+                            <span class="font-bold text-2xl">PI</span>
+                        </div>
+                        <h3 class="text-xl font-bold mb-2">Piper</h3>
+                        <p class="text-sm text-gray-600 mb-4">Fast, local neural text-to-speech</p>
+                        <div class="flex flex-wrap gap-2 justify-center">
+                            <span class="tag tag-cyan">Local</span>
+                            <span class="tag tag-green">Fast</span>
+                            <span class="tag tag-gray">Lightweight</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Slide 12: Implications -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Key Implications</span>
+            </h2>
+            <div class="max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-4">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Personal Security</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-red-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Voice authentication vulnerability</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-red-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Identity theft risks</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-red-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Personal data exposure</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-shield-alt text-red-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Reputation damage</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-1">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Business Impact</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-chart-line text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Financial fraud losses</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-chart-line text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Customer trust erosion</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-chart-line text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Regulatory compliance costs</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-chart-line text-blue-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Brand reputation damage</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-3">
+                            <i class="fas fa-gavel"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Legal Challenges</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-balance-scale text-orange-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Evidence authentication</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-balance-scale text-orange-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Jurisdictional issues</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-balance-scale text-orange-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Liability determination</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-balance-scale text-orange-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Regulatory framework gaps</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-2">
+                            <i class="fas fa-globe"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4">Societal Impact</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Digital trust erosion</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Misinformation spread</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Social cohesion threats</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-users text-green-500 mr-3 mt-1"></i>
+                                <span class="text-gray-700">Democratic process risks</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box mt-8">
+                    <p class="text-xl text-center font-semibold">
+                        <i class="fas fa-exclamation-triangle mr-3"></i>
+                        The trust paradox: As AI voice technology improves, the harder it becomes to distinguish real from fake
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 11: Recommendations -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center">
+            <h2 class="text-4xl font-bold mb-8 text-center section-title">
+                <span class="gradient-text">Strategic Recommendations</span>
+            </h2>
+            <div class="max-w-6xl mx-auto">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-2">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Technology Solutions</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Multi-factor authentication</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Deepfake detection tools</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Blockchain verification</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-green-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Watermarking technologies</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-1">
+                            <i class="fas fa-graduation-cap"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Education & Awareness</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Public awareness campaigns</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Digital literacy programs</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Professional training</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-blue-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">School curriculum integration</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tool-card">
+                        <div class="icon-box icon-gradient-3">
+                            <i class="fas fa-balance-scale"></i>
+                        </div>
+                        <h3 class="text-xl font-bold mb-4">Policy & Regulation</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-orange-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Updated legal frameworks</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-orange-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Industry standards</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-orange-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">International cooperation</span>
+                            </div>
+                            <div class="flex items-start">
+                                <i class="fas fa-check text-orange-500 mr-2 mt-1"></i>
+                                <span class="text-gray-700">Enforcement mechanisms</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="highlight-box-secondary mt-8">
+                    <h3 class="text-2xl font-bold mb-6 text-center">Malaysia-Specific Action Plan</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-bold mb-4 text-lg">
+                                <i class="fas fa-clock mr-2"></i>Immediate Actions (0-6 months)
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>National awareness campaign</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>Banking security updates</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>Emergency response protocols</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-bold mb-4 text-lg">
+                                <i class="fas fa-calendar-alt mr-2"></i>Long-term Strategy (6-24 months)
+                            </h4>
+                            <div class="space-y-2">
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>Comprehensive legislation</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>R&D investment</span>
+                                </div>
+                                <div class="flex items-start">
+                                    <i class="fas fa-arrow-right text-white mr-2 mt-1"></i>
+                                    <span>Regional leadership initiatives</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 13 Conclusion -->
+    <div class="slide">
+        <div class="slide-content flex flex-col justify-center items-center text-center">
+            <h2 class="text-4xl font-bold mb-8 section-title">
+                <span class="gradient-text">Conclusion</span>
+            </h2>
+            <div class="highlight-box max-w-4xl mb-8">
+                <p class="text-xl mb-6 font-medium">The rise of voice deepfake technology presents both unprecedented challenges and opportunities for Malaysia's digital future.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div>
+                        <div class="icon-box icon-gradient-1" style="width: 70px; height: 70px; font-size: 1.8rem; margin: 0 auto 1rem;">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Vigilance</h3>
+                        <p class="text-sm">Stay alert to emerging threats</p>
+                    </div>
+                    <div>
+                        <div class="icon-box icon-gradient-2" style="width: 70px; height: 70px; font-size: 1.8rem; margin: 0 auto 1rem;">
+                            <i class="fas fa-sync"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Adaptation</h3>
+                        <p class="text-sm">Evolving security measures</p>
+                    </div>
+                    <div>
+                        <div class="icon-box icon-gradient-3" style="width: 70px; height: 70px; font-size: 1.8rem; margin: 0 auto 1rem;">
+                            <i class="fas fa-handshake"></i>
+                        </div>
+                        <h3 class="text-lg font-bold mb-2">Collaboration</h3>
+                        <p class="text-sm">Multi-stakeholder approach</p>
+                    </div>
+                </div>
+                
+                <p class="text-lg font-bold mb-4">The future of digital trust depends on our actions today.</p>
+            </div>
+            
+            <div class="text-center">
+                <p class="text-3xl font-bold mb-4 gradient-text">Thank You</p>
+                <p class="text-xl text-gray-600 mb-6">Questions & Discussion</p>
+                <div class="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg rounded-2xl p-6 border border-gray-200">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                        <div>
+                            <i class="fas fa-university text-blue-500 mr-2"></i>
+                            <span class="font-semibold">UiTM Tapah</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-book text-green-500 mr-2"></i>
+                            <span class="font-semibold">ICT652</span>
+                        </div>
+                        <div>
+                            <i class="fas fa-users text-purple-500 mr-2"></i>
+                            <span class="font-semibold">A4CDCS2306A</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <p class="text-sm text-gray-500">
+                            <i class="fas fa-user-tie mr-2"></i>
+                            Presented by: Amir Hafizi, Muhammad 'Adli, Nik Muhammad Haziq, Mohamad Bukhari
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 13;
+        let autoPlayInterval = null;
+        let isAutoPlaying = false;
+
+        function showSlide(n) {
+            const slides = document.querySelectorAll('.slide');
+            if (n > totalSlides) currentSlide = 1;
+            if (n < 1) currentSlide = totalSlides;
+            
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[currentSlide - 1].classList.add('active');
+            
+            document.getElementById('current-slide').textContent = currentSlide;
+        }
+
+        function nextSlide() {
+            currentSlide++;
+            showSlide(currentSlide);
+        }
+
+        function previousSlide() {
+            currentSlide--;
+            showSlide(currentSlide);
+        }
+
+        function toggleAutoPlay() {
+            const playIcon = document.getElementById('play-icon');
+            const playText = document.getElementById('play-text');
+            
+            if (isAutoPlaying) {
+                clearInterval(autoPlayInterval);
+                playIcon.className = 'fas fa-play';
+                playText.textContent = 'Auto Play';
+                isAutoPlaying = false;
+            } else {
+                autoPlayInterval = setInterval(nextSlide, 5000);
+                playIcon.className = 'fas fa-pause';
+                playText.textContent = 'Pause';
+                isAutoPlaying = true;
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+            if (e.key === ' ') {
+                e.preventDefault();
+                toggleAutoPlay();
+            }
+        });
+
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) nextSlide();
+            if (touchEndX > touchStartX + 50) previousSlide();
+        }
+
+        // Scroll wheel navigation with debouncing
+        let lastScrollTime = 0;
+        const scrollThrottle = 800; // ms between scroll events
+
+        document.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            
+            const now = Date.now();
+            if (now - lastScrollTime < scrollThrottle) return;
+            lastScrollTime = now;
+            
+            if (e.deltaY > 0) {
+                nextSlide();
+            } else {
+                previousSlide();
+            }
+        }, { passive: false });
+
+        // Enhanced touch scrolling for mobile
+        let isScrolling = false;
+        let scrollStartY = 0;
+        let scrollEndY = 0;
+
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                scrollStartY = e.touches[0].screenY;
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', (e) => {
+            if (e.changedTouches.length === 1 && !isScrolling) {
+                scrollEndY = e.changedTouches[0].screenY;
+                handleScrollGesture();
+            }
+        }, { passive: true });
+
+        function handleScrollGesture() {
+            const scrollThreshold = 80;
+            const scrollDistance = scrollStartY - scrollEndY;
+            
+            if (Math.abs(scrollDistance) > scrollThreshold) {
+                if (scrollDistance > 0) {
+                    nextSlide();
+                } else {
+                    previousSlide();
+                }
+            }
+        }
+
+        // Initialize
+        showSlide(currentSlide);
+    </script>
+</body>
+</html>
